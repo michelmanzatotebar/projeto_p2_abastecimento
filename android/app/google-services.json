@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "239936566251",
+    "project_id": "projeto-abastecimento-michel",
+    "storage_bucket": "projeto-abastecimento-michel.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239936566251:android:87467f7dbf12eaa9b8dfae",
+        "android_client_info": {
+          "package_name": "br.unigran.projeto_abastecimento_michel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "239936566251-kpficn6n4lf713492vkdc6t9lr3tagjt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6OUzRtUuKUIaJwXKHIm2M7F8pGGb_3Cs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "239936566251-kpficn6n4lf713492vkdc6t9lr3tagjt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "239936566251-16ltgio6lcffn9esn9bshgq37e2h7jua.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.unigran.projetoAbastecimentoMichel"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
