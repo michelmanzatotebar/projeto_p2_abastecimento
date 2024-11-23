@@ -84,7 +84,7 @@ class AutenticacaoFirebase {
 
   Future<bool> isUserLoggedIn() async {
     User? user = FirebaseAuth.instance.currentUser;
-    return user !=
+    return /*false;*/user !=
         null; // Retorna true se o usuário estiver logado, caso contrário, false
   }
 }

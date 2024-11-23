@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:projeto_abastecimento_michel/telaPrincipal.dart';
 import 'package:projeto_abastecimento_michel/login.dart';
 import 'package:projeto_abastecimento_michel/widgets/tela_meus_veiculos.dart';
-
 import 'adicionar_veiculo_page.dart';
+import 'historico_abastecimento_page.dart';
 
 class DrawerMenu extends StatelessWidget {
   final User? user = FirebaseAuth.instance.currentUser;
@@ -88,14 +88,11 @@ class DrawerMenu extends StatelessWidget {
                   title: 'Histórico de Abastecimentos',
                   onTap: () {
                     Navigator.pop(context);
-                    /*Navigator.push(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => HistoricoAbastecimentosPage(),
                       ),
-                    );*/
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('tela sendo feita')),
                     );
                   },
                 ),
@@ -105,12 +102,6 @@ class DrawerMenu extends StatelessWidget {
                   title: 'Perfil',
                   onTap: () {
                     Navigator.pop(context);
-                    /*Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PerfilPage(),
-                      ),
-                    );*/
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('tela sendo feita')),
                     );

@@ -102,23 +102,38 @@ class _TelaMeusVeiculosState extends State<TelaMeusVeiculos> {
 
   Future<void> _deleteVeiculo(String veiculoId) async {
     try {
+      final abastecimentosQuery = await _firestore
+          .collection('abastecimentos')
+          .where('veiculoId', isEqualTo: veiculoId)
+          .get();
+
+      final batch = _firestore.batch();
+      for (var doc in abastecimentosQuery.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
       await _firestore.collection('veiculos').doc(veiculoId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veículo excluído com sucesso'),
-          backgroundColor: Colors.green,
-        ),
-      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Veículo e seus abastecimentos excluídos com sucesso'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao excluir veículo: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('Erro ao excluir veículo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao excluir veículo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
