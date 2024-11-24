@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:projeto_abastecimento_michel/models/abastecimento.dart';
-import 'package:projeto_abastecimento_michel/models/veiculo.dart';
 import 'package:projeto_abastecimento_michel/widgets/adicionar_veiculo_page.dart';
 import 'package:projeto_abastecimento_michel/widgets/drawer_menu.dart';
 import 'adicionar_abastecimento_page.dart';
@@ -11,15 +9,34 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
   final User? user = FirebaseAuth.instance.currentUser;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  String _converterParaFormatoOrdenavel(String data) {
+    try {
+      List<String> partes = data.split('/');
+      if (partes.length == 3) {
+        return "${partes[2]}/${partes[1]}/${partes[0]}";
+      }
+      return data;
+    } catch (e) {
+      print("Erro ao converter data: $e");
+      return data;
+    }
+  }
+
   String _formatarData(String data) {
     try {
       if (data.contains('/')) {
-        return data;
+        List<String> partes = data.split('/');
+        if (partes.length == 3) {
+          if (partes[0].length == 4) { // Se começa com ano (YYYY)
+            return "${partes[2]}/${partes[1]}/${partes[0]}";
+          }
+          return data;
+        }
       }
-      final DateTime dateTime = DateTime.parse(data);
+      DateTime dateTime = DateTime.parse(data);
       return "${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}";
     } catch (e) {
-      print('Erro ao formatar data: $e');
+      print("Erro ao formatar data: $e");
       return data;
     }
   }
@@ -29,7 +46,7 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
       await _firestore.collection('abastecimentos').doc(abastecimentoId).delete();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Abastecimento excluído com sucesso'),
             backgroundColor: Colors.green,
           ),
@@ -53,19 +70,19 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar Exclusão'),
-          content: Text('Deseja realmente excluir este abastecimento?'),
+          title: const Text('Confirmar Exclusão'),
+          content: const Text('Deseja realmente excluir este abastecimento?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _excluirAbastecimento(context, abastecimentoId);
               },
-              child: Text(
+              child: const Text(
                 'Excluir',
                 style: TextStyle(color: Colors.red),
               ),
@@ -80,22 +97,21 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Histórico de Abastecimentos'),
+        title: const Text('Histórico de Abastecimentos'),
       ),
       drawer: DrawerMenu(),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('abastecimentos')
             .where('userId', isEqualTo: user?.uid)
-            .orderBy('data', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar histórico'));
+            return const Center(child: Text('Erro ao carregar histórico'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -103,8 +119,8 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.local_gas_station, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  const Icon(Icons.local_gas_station, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
                   Text(
                     'Nenhum abastecimento registrado',
                     style: TextStyle(
@@ -118,10 +134,17 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
             );
           }
 
+          List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
+          docs.sort((a, b) {
+            String dataA = _converterParaFormatoOrdenavel(a['data'] as String);
+            String dataB = _converterParaFormatoOrdenavel(b['data'] as String);
+            return dataB.compareTo(dataA);
+          });
+
           return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = snapshot.data!.docs[index];
+              final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
 
               return FutureBuilder<DocumentSnapshot>(
@@ -137,9 +160,9 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
                   }
 
                   return Card(
-                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -157,31 +180,31 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
                                 ),
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () => _confirmarExclusao(context, doc.id),
                               ),
                             ],
                           ),
                           if (!veiculoExiste)
-                            Text(
+                            const Text(
                               'Veículo foi excluído',
                               style: TextStyle(
                                 color: Colors.red,
                                 fontSize: 12,
                               ),
                             ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Data: ${_formatarData(data['data'])}',
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                           ),
                           Text(
                             'Litros: ${data['litros'].toString()}',
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                           ),
                           Text(
                             'Quilometragem: ${data['quilometragem'].toString()} km',
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                           ),
                         ],
                       ),
@@ -195,8 +218,8 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _mostrarDialogSelecaoVeiculo(context),
-        label: Text('Novo Abastecimento'),
-        icon: Icon(Icons.local_gas_station),
+        label: const Text('Novo Abastecimento'),
+        icon: const Icon(Icons.local_gas_station),
       ),
     );
   }
@@ -212,7 +235,7 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Você precisa cadastrar um veículo primeiro'),
+              content: const Text('Você precisa cadastrar um veículo primeiro'),
               action: SnackBarAction(
                 label: 'Cadastrar',
                 onPressed: () {
@@ -235,14 +258,14 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Selecione o veículo'),
+              title: const Text('Selecione o veículo'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: veiculosSnapshot.docs.map((doc) {
                     final data = doc.data();
                     return ListTile(
-                      leading: Icon(Icons.directions_car),
+                      leading: const Icon(Icons.directions_car),
                       title: Text('${data['nome']} - ${data['placa']}'),
                       onTap: () {
                         Navigator.pop(context, doc.id);
@@ -254,7 +277,7 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Cancelar'),
+                  child: const Text('Cancelar'),
                 ),
               ],
             );
@@ -279,16 +302,27 @@ class HistoricoAbastecimentosPage extends StatelessWidget {
 
   void _navegarParaAdicionarAbastecimento(BuildContext context, String veiculoId) async {
     try {
-      final ultimoAbastecimento = await _firestore
+      final querySnapshot = await _firestore
           .collection('abastecimentos')
           .where('veiculoId', isEqualTo: veiculoId)
-          .orderBy('data', descending: true)
-          .limit(1)
           .get();
 
       double? ultimaQuilometragem;
-      if (ultimoAbastecimento.docs.isNotEmpty) {
-        ultimaQuilometragem = (ultimoAbastecimento.docs.first.data()['quilometragem'] ?? 0).toDouble();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        List<Map<String, dynamic>> abastecimentos = querySnapshot.docs
+            .map((doc) => doc.data() as Map<String, dynamic>)
+            .toList();
+
+        abastecimentos.sort((a, b) {
+          String dataA = _converterParaFormatoOrdenavel(a['data'] as String);
+          String dataB = _converterParaFormatoOrdenavel(b['data'] as String);
+          return dataB.compareTo(dataA);
+        });
+
+        if (abastecimentos.isNotEmpty) {
+          ultimaQuilometragem = double.parse(abastecimentos[0]['quilometragem'].toString());
+        }
       }
 
       if (context.mounted) {

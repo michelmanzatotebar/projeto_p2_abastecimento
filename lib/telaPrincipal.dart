@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:projeto_abastecimento_michel/widgets/drawer_menu.dart';
 import 'package:projeto_abastecimento_michel/models/veiculo.dart';
+import 'package:projeto_abastecimento_michel/widgets/detalhes_veiculo_page.dart';
+
+import 'calculo_media.dart';
 
 class MyApp extends StatefulWidget {
   @override
@@ -36,12 +39,23 @@ class _HomePageState extends State<MyApp> {
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
-              child: Text(
-                'Nenhum veículo cadastrado',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[600],
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.directions_car_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Nenhum veículo cadastrado',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -63,7 +77,7 @@ class _HomePageState extends State<MyApp> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 1.1,
+                    childAspectRatio: 0.85,
                   ),
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
@@ -73,6 +87,14 @@ class _HomePageState extends State<MyApp> {
                     return Card(
                       elevation: 4,
                       child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetalhesVeiculoPage(veiculo: veiculo),
+                            ),
+                          );
+                        },
                         child: Padding(
                           padding: EdgeInsets.all(12),
                           child: Column(
@@ -101,7 +123,38 @@ class _HomePageState extends State<MyApp> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              SizedBox(height: 8),
+                              FutureBuilder<double>(
+                                future: CalculoMedia.calcularUltimaMedia(veiculo.id!),
+                                builder: (context, mediaSnapshot) {
+                                  if (mediaSnapshot.connectionState == ConnectionState.waiting) {
+                                    return CircularProgressIndicator(strokeWidth: 2);
+                                  }
 
+                                  double media = mediaSnapshot.data ?? 0.0;
+                                  return Column(
+                                    children: [
+                                      Text(
+                                        'Última Média',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        media > 0
+                                            ? '${media.toStringAsFixed(1)} km/L'
+                                            : 'Sem média',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),

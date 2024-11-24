@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:projeto_abastecimento_michel/calculo_media.dart';
 import 'package:projeto_abastecimento_michel/widgets/drawer_menu.dart';
 import 'package:projeto_abastecimento_michel/models/veiculo.dart';
+import 'package:projeto_abastecimento_michel/widgets/detalhes_veiculo_page.dart';
 
 class TelaMeusVeiculos extends StatefulWidget {
   @override
@@ -134,6 +136,7 @@ class _TelaMeusVeiculosState extends State<TelaMeusVeiculos> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,9 +164,9 @@ class _TelaMeusVeiculosState extends State<TelaMeusVeiculos> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                      Icons.directions_car_outlined,
-                      size: 64,
-                      color: Colors.grey
+                    Icons.directions_car_outlined,
+                    size: 64,
+                    color: Colors.grey,
                   ),
                   SizedBox(height: 16),
                   Text(
@@ -189,64 +192,97 @@ class _TelaMeusVeiculosState extends State<TelaMeusVeiculos> {
               return Card(
                 elevation: 4,
                 margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Icon(Icons.directions_car, color: Colors.white),
-                  ),
-                  title: Text(
-                    veiculo.nome,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        child: Icon(Icons.directions_car, color: Colors.white),
+                      ),
+                      title: Text(
+                        veiculo.nome,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Modelo: ${veiculo.modelo}'),
+                          Text('Ano: ${veiculo.ano}'),
+                          Text('Placa: ${veiculo.placa}'),
+                          FutureBuilder<double>(
+                            future: CalculoMedia.calcularUltimaMedia(veiculo.id!),
+                            builder: (context, mediaSnapshot) {
+                              if (mediaSnapshot.connectionState == ConnectionState.waiting) {
+                                return Text('Calculando média...');
+                              }
+                              double media = mediaSnapshot.data ?? 0.0;
+                              return Text(
+                                media > 0
+                                    ? 'Última média: ${media.toStringAsFixed(1)} km/L'
+                                    : 'Sem média',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.info, color: Colors.blue),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DetalhesVeiculoPage(veiculo: veiculo),
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _editVeiculo(veiculo),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Confirmar exclusão'),
+                                  content: Text('Deseja realmente excluir este veículo e todos os seus abastecimentos?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('Cancelar'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _deleteVeiculo(veiculo.id!);
+                                      },
+                                      child: Text(
+                                        'Excluir',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Modelo: ${veiculo.modelo}'),
-                      Text('Ano: ${veiculo.ano}'),
-                      Text('Placa: ${veiculo.placa}'),
-                    ],
-                  ),
-                  isThreeLine: true,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _editVeiculo(veiculo),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text('Confirmar exclusão'),
-                              content: Text('Deseja realmente excluir este veículo?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text('Cancelar'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _deleteVeiculo(veiculo.id!);
-                                  },
-                                  child: Text(
-                                    'Excluir',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               );
             },

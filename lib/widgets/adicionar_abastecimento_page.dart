@@ -34,6 +34,13 @@ class _AdicionarAbastecimentoPageState extends State<AdicionarAbastecimentoPage>
     super.dispose();
   }
 
+  String _mascaraData(String texto) {
+    if (texto.length == 2 || texto.length == 5) {
+      return "$texto/";
+    }
+    return texto;
+  }
+
   DateTime? _parseDate(String date) {
     try {
       List<String> parts = date.split('/');
@@ -82,7 +89,7 @@ class _AdicionarAbastecimentoPageState extends State<AdicionarAbastecimentoPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Abastecimento registrado com sucesso!')),
+          const SnackBar(content: Text('Abastecimento registrado com sucesso!')),
         );
         Navigator.pop(context);
       }
@@ -161,7 +168,7 @@ class _AdicionarAbastecimentoPageState extends State<AdicionarAbastecimentoPage>
                           try {
                             final km = double.parse(value.replaceAll(',', '.'));
                             if (widget.ultimaQuilometragem != null && km <= widget.ultimaQuilometragem!) {
-                              return 'A quilometragem deve ser maior que a última registrada';
+                              return 'A quilometragem deve ser maior que a última registrada (${widget.ultimaQuilometragem!.toStringAsFixed(1)} km)';
                             }
                           } catch (e) {
                             return 'Por favor, insira um número válido';
@@ -173,23 +180,72 @@ class _AdicionarAbastecimentoPageState extends State<AdicionarAbastecimentoPage>
                       TextFormField(
                         controller: _dataController,
                         decoration: InputDecoration(
-                          labelText: 'Data do Abastecimento (xx/yy/aaaa)',
+                          labelText: 'Data do Abastecimento',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.calendar_today),
-                          hintText: 'Ex: 01/01/2024',
+                          hintText: 'dd/mm/aaaa',
                         ),
-                        keyboardType: TextInputType.text,
+                        keyboardType: TextInputType.number,
                         inputFormatters: [
-                          LengthLimitingTextInputFormatter(10),
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(8),
+                          TextInputFormatter.withFunction((oldValue, newValue) {
+                            final text = newValue.text;
+                            if (text.isEmpty) return newValue;
+
+                            String formatted = text;
+                            if (text.length >= 2 && !text.contains('/')) {
+                              formatted = text.substring(0, 2) + '/';
+                              if (text.length >= 4) {
+                                formatted += text.substring(2, 4) + '/';
+                                if (text.length >= 8) {
+                                  formatted += text.substring(4, 8);
+                                } else {
+                                  formatted += text.substring(4);
+                                }
+                              } else {
+                                formatted += text.substring(2);
+                              }
+                            }
+
+                            return TextEditingValue(
+                              text: formatted,
+                              selection: TextSelection.collapsed(offset: formatted.length),
+                            );
+                          }),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, insira a data';
                           }
 
-                          RegExp dateFormat = RegExp(r'^\d{2}/\d{2}/\d{4}$');
-                          if (!dateFormat.hasMatch(value)) {
-                            return 'Use o formato: xx/yy/zzzz';
+                          if (value.length != 10) {
+                            return 'Data inválida';
+                          }
+
+                          try {
+                            List<String> parts = value.split('/');
+                            if (parts.length != 3) return 'Data inválida';
+
+                            int day = int.parse(parts[0]);
+                            int month = int.parse(parts[1]);
+                            int year = int.parse(parts[2]);
+
+                            if (month < 1 || month > 12) return 'Mês inválido';
+                            if (day < 1 || day > 31) return 'Dia inválido';
+                            if (year < 2000 || year > 2100) return 'Ano inválido';
+
+                            // Validação adicional para meses com 30 dias
+                            if ([4, 6, 9, 11].contains(month) && day > 30) return 'Dia inválido para este mês';
+
+                            // Validação para fevereiro
+                            if (month == 2) {
+                              bool isLeapYear = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+                              if (day > (isLeapYear ? 29 : 28)) return 'Dia inválido para fevereiro';
+                            }
+
+                          } catch (e) {
+                            return 'Data inválida';
                           }
 
                           return null;
